@@ -1,0 +1,92 @@
+_schema-version: "3.2"
+ID: cicdtuevpoc
+version: 0.0.1
+modules:
+- name: cicdtuevpoc-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: cicdtuevpoc-destination-service
+    parameters:
+      content-target: true
+  - name: cicdtuevpoc_html_repo_host
+    parameters:
+      service-key:
+        name: cicdtuevpoc_html_repo_host-key
+  - name: uaa_cicdtuevpoc
+    parameters:
+      service-key:
+        name: uaa_cicdtuevpoc-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: cicdtuevpoc_cicdtuevpoc_html_repo_host
+          ServiceInstanceName: cicdtuevpoc-html5-app-host-service
+          ServiceKeyName: cicdtuevpoc_html_repo_host-key
+          sap.cloud.service: cicdtuevpoc
+        - Authentication: OAuth2UserTokenExchange
+          Name: cicdtuevpoc_uaa_cicdtuevpoc
+          ServiceInstanceName: cicdtuevpoc-xsuaa-service
+          ServiceKeyName: uaa_cicdtuevpoc-key
+          sap.cloud.service: cicdtuevpoc
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: cicdtuevpoc-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: cicdtuevpoc_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - cicdtuevpoc2.zip
+      name: cicdtuevpoc2
+      target-path: resources/
+- name: cicdtuevpoc2
+  type: html5
+  path: cicdtuevpoc2
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: cicdtuevpoc-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: cicdtuevpoc-destination-service
+    service-plan: lite
+- name: cicdtuevpoc_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: cicdtuevpoc-html5-app-host-service
+    service-plan: app-host
+- name: uaa_cicdtuevpoc
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: cicdtuevpoc-xsuaa-service
+    service-plan: application
+parameters:
+  deploy_mode: html5-repo
