@@ -10,6 +10,10 @@ sap.ui.define([
         return Controller.extend("cicdtuevpoc2.controller.Start", {
             onInit: function () {
 
+            },
+
+            onClick: function (){
+                sap.m.MessageToast.show("First Commit!");
             }
         });
     });
